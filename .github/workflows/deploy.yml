@@ -26,7 +26,7 @@ jobs:
       - name: Website zusammenstellen
         run: |
           mkdir _site
-          cp -r index.html admin.html impressum.html datenschutz.html robots.txt css js images _site/
+          cp -r index.html admin impressum.html datenschutz.html robots.txt css js images _site/
           rm -f _site/js/firebase-config.example.js
 
       - name: Firebase-Konfiguration aus GitHub Secrets schreiben

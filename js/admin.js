@@ -3,6 +3,8 @@ import { SECTIONS, DEFAULT_IMAGES, SEASON_COLORS } from './config-defaults.js';
 import * as P from './pricing.js';
 import { createCalendar } from './calendar.js';
 
+// Pfade zu Website-Dateien (die Verwaltung liegt im Unterordner /admin/)
+const asset = (path) => new URL(`../${path}`, import.meta.url).href;
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -92,7 +94,7 @@ const showTab = (name) => {
   $$('.admin-tabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
   $$('[data-panel]').forEach((p) => { p.hidden = p.dataset.panel !== name; });
   if (name === 'belegung') calendar.render();
-  history.replaceState(null, '', `#${name}`);
+  history.replaceState(null, '', `${location.pathname}#${name}`);
 };
 $('.admin-tabs').addEventListener('click', (e) => {
   const btn = e.target.closest('[data-tab]');
@@ -348,7 +350,7 @@ function renderImages() {
     const defaults = !imgs.length
       ? `<p class="img-defaults-note"><span>Auf der Website werden die Standardfotos gezeigt (${DEFAULT_IMAGES[sec.id].length}). Beim ersten Hochladen werden sie automatisch übernommen und bleiben erhalten.</span>
           <button class="btn btn-outline btn-sm" type="button" data-import="${sec.id}">Standardfotos übernehmen</button></p>
-         <div class="img-grid">${DEFAULT_IMAGES[sec.id].map((d) => `<div class="img-item"><div class="img-thumb"><img src="${d.src}" alt="" loading="lazy"></div><span class="img-badge">Standardfoto</span><div class="img-body"><small class="muted">${esc(d.caption)}</small></div></div>`).join('')}</div>`
+         <div class="img-grid">${DEFAULT_IMAGES[sec.id].map((d) => `<div class="img-item"><div class="img-thumb"><img src="${asset(d.src)}" alt="" loading="lazy"></div><span class="img-badge">Standardfoto</span><div class="img-body"><small class="muted">${esc(d.caption)}</small></div></div>`).join('')}</div>`
       : '';
     return `<div class="admin-card img-section">
       <div class="list-head">
@@ -360,7 +362,7 @@ function renderImages() {
   }).join('');
 }
 
-const defaultSources = (section) => Promise.all(DEFAULT_IMAGES[section].map(async (d) => ({ blob: await (await fetch(d.src)).blob(), caption: d.caption })));
+const defaultSources = (section) => Promise.all(DEFAULT_IMAGES[section].map(async (d) => ({ blob: await (await fetch(asset(d.src))).blob(), caption: d.caption })));
 
 async function addImages(section, sources) {
   let order = Math.max(-1, ...sectionImages(section).map((i) => i.order ?? 0)) + 1;
