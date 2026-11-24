@@ -1,5 +1,4 @@
-// Datenspeicher: Firebase (Firestore + Auth) wenn js/firebase-config.js vorhanden ist,
-// sonst ein Demo-Modus, der nur im eigenen Browser speichert.
+// Datenspeicher: Firebase (Firestore + Auth). Fehlt js/firebase-config.js, zeigt die Website nur die Standardwerte.
 import { DEFAULT_SETTINGS } from './config-defaults.js';
 
 const SDK = 'https://www.gstatic.com/firebasejs/10.12.2/';
@@ -30,44 +29,20 @@ export function normalizeSettings(raw = {}) {
 
 const byOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0) || String(a.created || '').localeCompare(String(b.created || ''));
 const byFrom = (a, b) => a.from.localeCompare(b.from);
-const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
-function demoStore() {
-  const KEY = 'tomshuette-demo';
-  const read = () => {
-    let d = {};
-    try { d = JSON.parse(localStorage.getItem(KEY)) || {}; } catch { d = {}; }
-    d.bookings ||= []; d.images ||= []; d.notes ||= {};
-    return d;
-  };
-  const write = (d) => {
-    try { localStorage.setItem(KEY, JSON.stringify(d)); } catch {
-      throw new Error('Der Browserspeicher im Demo-Modus ist voll. Bitte Bilder löschen oder Firebase einrichten.');
-    }
-  };
-  let authCb = null;
-  const user = () => (sessionStorage.getItem('tomshuette-demo-login') ? { email: 'Demo-Modus' } : null);
-
+// Ohne Firebase-Verbindung: nur Standardwerte anzeigen, nichts speichern
+function offlineStore() {
+  const blocked = async () => { throw new Error('Keine Verbindung zu Firebase. Speichern ist nicht möglich.'); };
   return {
-    mode: 'demo',
-    async getSettings() { return normalizeSettings(read().settings); },
-    async saveSettings(s) { const d = read(); d.settings = s; write(d); },
-    async getBookings() { return read().bookings.slice().sort(byFrom); },
-    async addBooking({ from, to, note }) {
-      const d = read(); const id = newId();
-      d.bookings.push({ id, from, to });
-      if (note) d.notes[id] = note;
-      write(d); return id;
-    },
-    async deleteBooking(id) { const d = read(); d.bookings = d.bookings.filter((b) => b.id !== id); delete d.notes[id]; write(d); },
-    async getNotes() { return read().notes; },
-    async getImages() { return read().images.slice().sort(byOrder); },
-    async addImage(img) { const d = read(); const id = newId(); d.images.push({ id, ...img, created: new Date().toISOString() }); write(d); return id; },
-    async updateImage(id, patch) { const d = read(); d.images = d.images.map((i) => (i.id === id ? { ...i, ...patch } : i)); write(d); },
-    async deleteImage(id) { const d = read(); d.images = d.images.filter((i) => i.id !== id); write(d); },
-    onAuth(cb) { authCb = cb; cb(user()); },
-    async login() { sessionStorage.setItem('tomshuette-demo-login', '1'); authCb?.(user()); },
-    async logout() { sessionStorage.removeItem('tomshuette-demo-login'); authCb?.(null); },
+    mode: 'offline',
+    async getSettings() { return normalizeSettings({}); },
+    async getBookings() { return []; },
+    async getNotes() { return {}; },
+    async getImages() { return []; },
+    saveSettings: blocked, addBooking: blocked, deleteBooking: blocked, addImage: blocked, updateImage: blocked, deleteImage: blocked,
+    onAuth(cb) { cb(null); },
+    login: blocked,
+    async logout() {},
   };
 }
 
@@ -117,5 +92,5 @@ async function firebaseStore({ admin }) {
 }
 
 export function createStore({ admin = false } = {}) {
-  return isFirebase ? firebaseStore({ admin }) : Promise.resolve(demoStore());
+  return isFirebase ? firebaseStore({ admin }) : Promise.resolve(offlineStore());
 }

@@ -431,11 +431,19 @@ function renderPrices() {
   $$('[data-fee-row]').forEach((el) => { el.hidden = !s.feeEnabled; });
   $$('[data-max-persons-input]').forEach((el) => { el.max = s.maxPersons; });
 
-  $('#month-grid').innerHTML = s.months.map((p, i) => `<div class="month-cell"><span>${P.MONTHS[i].slice(0, 3)}</span><strong>${P.euro.format(p)}</strong></div>`).join('');
-
   const today = P.todayISO();
   const seasons = s.seasons.filter((x) => x.to >= today);
   $('#season-wrap').hidden = !seasons.length;
+
+  // Monatspreise nur für Monate zeigen, in denen buchbare Tage ohne Saisonpreis liegen
+  const openMonths = new Set();
+  for (let d = today, last = P.lastBookableISO(s); d <= last; d = P.addDaysISO(d, 1)) {
+    if (!P.seasonFor(s, d)) openMonths.add(P.parseISO(d).getMonth());
+  }
+  const monthList = seasons.length ? [...openMonths].sort((a, b) => a - b) : s.months.map((_, i) => i);
+  $('#month-wrap').hidden = !monthList.length;
+  $('#month-title').textContent = seasons.length ? 'Übrige Zeiten, Preis pro Nacht' : 'Preise pro Nacht nach Monat';
+  $('#month-grid').innerHTML = monthList.map((i) => `<div class="month-cell"><span>${P.MONTHS[i].slice(0, 3)}</span><strong>${P.euro.format(s.months[i])}</strong></div>`).join('');
   $('#season-list').innerHTML = seasons.map((x) => `<li><i style="--season:${esc(x.color)}"></i><span><strong>${esc(x.name)}</strong><small>${P.formatDate(x.from)} bis ${P.formatDate(x.to)}</small></span><b>${P.euro.format(x.price)}</b></li>`).join('');
 
   const legend = $('#cal-legend');

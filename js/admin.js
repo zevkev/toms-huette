@@ -9,7 +9,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<
 
 const ADMIN_DOMAIN = 'toms-huette-borkum.firebaseapp.com';
 const store = await createStore({ admin: true });
-const isDemo = store.mode === 'demo';
+const offline = store.mode === 'offline';
 
 const state = {
   settings: normalizeSettings({}),
@@ -39,9 +39,9 @@ const fail = (err) => {
 };
 
 /* ---------- Anmeldung ---------- */
-if (isDemo) {
+if (offline) {
   $('#demo-banner').hidden = false;
-  $('#demo-login-hint').hidden = false;
+  $('#login-btn').disabled = true;
 }
 
 const loginForm = $('#login-form');
@@ -302,11 +302,11 @@ priceForm.addEventListener('submit', async (e) => {
 });
 
 /* ---------- Bilder ---------- */
-const MAX_CHARS = isDemo ? 260_000 : 700_000; // Firestore-Dokumente dürfen höchstens 1 MB groß sein
+const MAX_CHARS = 700_000; // Firestore-Dokumente dürfen höchstens 1 MB groß sein
 
 async function compressImage(blob) {
   const bitmap = await createImageBitmap(blob, { imageOrientation: 'from-image' });
-  let longSide = isDemo ? 1200 : 1800;
+  let longSide = 1800;
   let quality = 0.82;
   let result = null;
   for (let i = 0; i < 8; i++) {
@@ -346,7 +346,7 @@ function renderImages() {
       </div>`;
     }).join('');
     const defaults = !imgs.length
-      ? `<p class="img-defaults-note"><span>Noch keine eigenen Bilder. Auf der Website werden die Standardfotos gezeigt (${DEFAULT_IMAGES[sec.id].length}).</span>
+      ? `<p class="img-defaults-note"><span>Auf der Website werden die Standardfotos gezeigt (${DEFAULT_IMAGES[sec.id].length}). Beim ersten Hochladen werden sie automatisch übernommen und bleiben erhalten.</span>
           <button class="btn btn-outline btn-sm" type="button" data-import="${sec.id}">Standardfotos übernehmen</button></p>
          <div class="img-grid">${DEFAULT_IMAGES[sec.id].map((d) => `<div class="img-item"><div class="img-thumb"><img src="${d.src}" alt="" loading="lazy"></div><span class="img-badge">Standardfoto</span><div class="img-body"><small class="muted">${esc(d.caption)}</small></div></div>`).join('')}</div>`
       : '';
@@ -359,6 +359,8 @@ function renderImages() {
     </div>`;
   }).join('');
 }
+
+const defaultSources = (section) => Promise.all(DEFAULT_IMAGES[section].map(async (d) => ({ blob: await (await fetch(d.src)).blob(), caption: d.caption })));
 
 async function addImages(section, sources) {
   let order = Math.max(-1, ...sectionImages(section).map((i) => i.order ?? 0)) + 1;
@@ -381,7 +383,12 @@ $('#image-sections').addEventListener('change', async (e) => {
   if (upload) {
     const files = [...upload.files];
     upload.value = '';
-    if (files.length) await addImages(upload.dataset.upload, files.map((f) => ({ blob: f, caption: '' })));
+    if (!files.length) return;
+    const section = upload.dataset.upload;
+    let sources = files.map((f) => ({ blob: f, caption: '' }));
+    // Erster eigener Upload: bisherige Standardfotos übernehmen, damit sie nicht verschwinden
+    if (!sectionImages(section).length) sources = [...await defaultSources(section), ...sources];
+    await addImages(section, sources);
     return;
   }
   const caption = e.target.closest('[data-caption]');
@@ -394,8 +401,7 @@ $('#image-sections').addEventListener('click', async (e) => {
   const imp = e.target.closest('[data-import]');
   if (imp) {
     imp.disabled = true;
-    const sources = await Promise.all(DEFAULT_IMAGES[imp.dataset.import].map(async (d) => ({ blob: await (await fetch(d.src)).blob(), caption: d.caption })));
-    await addImages(imp.dataset.import, sources);
+    await addImages(imp.dataset.import, await defaultSources(imp.dataset.import));
     return;
   }
   const move = e.target.closest('[data-move]');
