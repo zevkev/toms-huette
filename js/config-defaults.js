@@ -8,7 +8,15 @@ export const DEFAULT_SETTINGS = {
   maxAdvanceDays: 365,  // so weit im Voraus kann angefragt werden
   feeEnabled: true,
   fee: 100,
-  seasons: [],          // { name, from: 'JJJJ-MM-TT', to: 'JJJJ-MM-TT', price, color }
+  // { name, from: 'JJJJ-MM-TT', to: 'JJJJ-MM-TT', price, color }
+  // Schulferien NRW laut Ferienordnung des Schulministeriums NRW
+  seasons: [
+    { name: 'Weihnachtsferien NRW', from: '2026-12-23', to: '2027-01-06', price: 85, color: '#9b8be8' },
+    { name: 'Osterferien NRW', from: '2027-03-22', to: '2027-04-03', price: 85, color: '#7cc4a8' },
+    { name: 'Sommerferien NRW', from: '2027-07-19', to: '2027-08-31', price: 85, color: '#f2b544' },
+    { name: 'Herbstferien NRW', from: '2027-10-23', to: '2027-11-06', price: 85, color: '#e98a6b' },
+    { name: 'Weihnachtsferien NRW', from: '2027-12-24', to: '2028-01-08', price: 85, color: '#9b8be8' },
+  ],
 };
 
 export const SECTIONS = [
