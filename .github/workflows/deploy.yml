@@ -28,6 +28,10 @@ jobs:
           mkdir _site
           cp -r index.html admin impressum datenschutz robots.txt css js images _site/
           rm -f _site/js/firebase-config.example.js
+          # Versionsnummer an alle Skript-, Stil- und Modul-Adressen hängen, damit Browser keine alten Dateien mischen
+          V="${GITHUB_SHA::8}"
+          sed -i -E "s#(from '\./[a-z-]+\.js)'#\1?v=$V'#g; s#import\('\./firebase-config\.js'\)#import('./firebase-config.js?v=$V')#" _site/js/*.js
+          sed -i -E "s#(src=\"(\.\./)?js/[a-z-]+\.js)\"#\1?v=$V\"#g; s#(href=\"(\.\./)?css/[a-z-]+\.css)\"#\1?v=$V\"#g" _site/index.html _site/admin/index.html _site/impressum/index.html _site/datenschutz/index.html
 
       - name: Firebase-Konfiguration aus GitHub Secrets schreiben
         env:

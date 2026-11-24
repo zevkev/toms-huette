@@ -335,7 +335,7 @@ const updateQuick = () => {
     value.textContent = P.euro.format(q.total);
   } else {
     const n = s.minNights;
-    const extrasSum = s.extras.filter((x) => x.active).reduce((sum, x) => sum + P.extraAmount(x, n, persons), 0);
+    const extrasSum = (s.extras || []).filter((x) => x.active).reduce((sum, x) => sum + P.extraAmount(x, n, persons), 0);
     const example = P.minNightPrice(s) * n + Math.max(0, persons - s.basePersons) * s.extraPerson * n + (s.feeEnabled ? s.fee : 0) + extrasSum;
     label.textContent = `${P.nightsLabel(n)}, ${P.personsLabel(persons)}, ab`;
     value.textContent = P.euro.format(example);
@@ -432,7 +432,7 @@ function renderPrices() {
   setAll('[data-fee]', P.euro.format(s.fee));
   setAll('[data-price-note]', `für ${s.basePersons} Personen${s.feeEnabled ? ` · zzgl. einmalig ${P.euro.format(s.fee)} Pauschale` : ''}`);
   $$('[data-fee-row]').forEach((el) => { el.hidden = !s.feeEnabled; });
-  $('#extras-rows').innerHTML = s.extras.filter((x) => x.active).map((x) => `
+  $('#extras-rows').innerHTML = (s.extras || []).filter((x) => x.active).map((x) => `
     <div class="price-row">
       <div><p class="price-label">${esc(x.name)}</p><p class="price-hint">${P.EXTRA_UNITS[x.unit] || ''}</p></div>
       <p class="price-value">${P.euro.format(x.price)}</p>

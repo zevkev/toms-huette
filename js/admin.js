@@ -162,7 +162,7 @@ $('#booking-form').addEventListener('submit', async (e) => {
   const to = bTo.value;
   if (entryType() === 'blocked') {
     if (!from || !to || to < from) { toast('Bitte einen gültigen Zeitraum wählen.', true); return; }
-    await saveBlocked([...state.settings.blocked, { from, to }], 'Zeitraum ist jetzt nicht buchbar und im Kalender grau.');
+    await saveBlocked([...(state.settings.blocked || []), { from, to }], 'Zeitraum ist jetzt nicht buchbar und im Kalender grau.');
     state.selection = { from: '', to: '' };
     bFrom.value = ''; bTo.value = '';
     renderBookings();
@@ -196,7 +196,7 @@ function renderBookings() {
   const today = P.todayISO();
   const entries = [
     ...state.bookings.map((b) => ({ kind: 'booking', id: b.id, from: b.from, to: b.to, end: b.to })),
-    ...state.settings.blocked.map((b, i) => ({ kind: 'blocked', id: String(i), from: b.from, to: b.to, end: b.to })),
+    ...(state.settings.blocked || []).map((b, i) => ({ kind: 'blocked', id: String(i), from: b.from, to: b.to, end: b.to })),
   ].filter((e) => state.showPast || e.end >= today).sort((a, b) => a.from.localeCompare(b.from));
   $('#booking-list').innerHTML = entries.length
     ? entries.map((e) => `
@@ -297,7 +297,7 @@ function renderPriceForm() {
     <div class="field"><label for="m-${i}">${P.MONTHS[i]}</label><input type="number" id="m-${i}" class="m-in" min="0" value="${p}"></div>`).join('');
   $('#season-rows').innerHTML = s.seasons.map(seasonRow).join('');
   renderSeasonEmpty();
-  $('#extra-rows').innerHTML = s.extras.map(extraRow).join('');
+  $('#extra-rows').innerHTML = (s.extras || []).map(extraRow).join('');
   renderExtraEmpty();
   setDirty(false);
 }
@@ -381,7 +381,7 @@ priceForm.addEventListener('submit', async (e) => {
     row.classList.toggle('is-invalid', bad);
     if (bad) invalid = true; else next.extras.push(extra);
   });
-  next.blocked = state.settings.blocked;
+  next.blocked = state.settings.blocked || [];
   if (invalid) { toast('Bitte prüfen Sie die rot markierten Zeilen (Name, Datum und Preis).', true); return; }
   if (next.months.some((p) => p <= 0)) { toast('Bitte für jeden Monat einen Preis eintragen.', true); return; }
   if (next.basePersons > next.maxPersons) { toast('Die Personen im Grundpreis dürfen nicht über der Höchstzahl liegen.', true); return; }
