@@ -2,6 +2,23 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
+  <meta name="build" content="dev">
+  <script data-base="../">
+    (function () {
+      var build = document.querySelector('meta[name="build"]').content;
+      if (build === 'dev') return;
+      var base = document.currentScript.dataset.base || '';
+      fetch(base + 'version.json?t=' + Date.now(), { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (v) {
+          if (!v || v.build === build) return;
+          var key = 'reload-' + v.build;
+          try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1'); } catch (e) {}
+          location.reload();
+        })
+        .catch(function () {});
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Impressum | Toms Hütte Borkum</title>
   <meta name="robots" content="noindex, follow">

@@ -223,7 +223,18 @@ arrival.addEventListener('change', () => {
   setDateLimits(arrival, departure);
   updateEstimate();
 });
-departure.addEventListener('change', updateEstimate);
+// Abreise nie kürzer als der Mindestaufenthalt
+const enforceMinStay = (a, d) => {
+  if (!a.value || !d.value) return false;
+  const minDep = P.addDaysISO(a.value, state.settings.minNights);
+  if (d.value < minDep) { d.value = minDep; return true; }
+  return false;
+};
+departure.addEventListener('change', () => {
+  const fixed = enforceMinStay(arrival, departure);
+  updateEstimate();
+  if (fixed) estimateText.insertAdjacentHTML('afterbegin', `<b>Mindestaufenthalt ${state.settings.minNights} Nächte, Abreise angepasst.</b><br>`);
+});
 form.addEventListener('input', (e) => {
   e.target.closest('.field, .bf-field')?.classList.remove('has-error');
   formError.hidden = true;
@@ -350,7 +361,11 @@ qArrival.addEventListener('change', () => {
   setDateLimits(qArrival, qDeparture);
   updateQuick();
 });
-qDeparture.addEventListener('change', updateQuick);
+qDeparture.addEventListener('change', () => {
+  const fixed = enforceMinStay(qArrival, qDeparture);
+  updateQuick();
+  if (fixed) $('#q-total-label').textContent = `Ab ${state.settings.minNights} Nächten, Abreise angepasst`;
+});
 qPersons.addEventListener('input', () => { updateQuick(); renderSelection(); });
 
 quick.addEventListener('submit', (e) => {

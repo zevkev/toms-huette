@@ -2,6 +2,23 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
+  <meta name="build" content="dev">
+  <script data-base="">
+    (function () {
+      var build = document.querySelector('meta[name="build"]').content;
+      if (build === 'dev') return;
+      var base = document.currentScript.dataset.base || '';
+      fetch(base + 'version.json?t=' + Date.now(), { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (v) {
+          if (!v || v.build === build) return;
+          var key = 'reload-' + v.build;
+          try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1'); } catch (e) {}
+          location.reload();
+        })
+        .catch(function () {});
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Toms Hütte | Ferienwohnung auf Borkum nahe dem Südstrand</title>
   <meta name="description" content="Toms Hütte: liebevoll eingerichtete Ferienwohnung auf Borkum in der Deichstraße nahe dem Südstrand. 52 m² im Erdgeschoss für bis zu 4 Personen, mit Balkon, eigenem PKW-Stellplatz, WLAN, Waschmaschine und Trockner. Jetzt freie Termine ansehen und anfragen.">
