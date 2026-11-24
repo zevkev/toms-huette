@@ -347,6 +347,16 @@ $('#extra-rows').addEventListener('click', (e) => {
   renderExtraEmpty();
   setDirty(true);
 });
+// Farbe wählen trägt den passenden Saisonnamen ein (eine Farbe = eine Saison)
+$('#season-rows').addEventListener('change', (e) => {
+  if (!e.target.classList.contains('s-color')) return;
+  const row = e.target.closest('.season-row');
+  const name = $('.s-name', row);
+  const paletteNames = SEASON_PALETTE.map((p) => p.name);
+  if (!name.value.trim() || paletteNames.includes(name.value.trim())) {
+    name.value = SEASON_PALETTE.find((p) => p.color === e.target.value)?.name || name.value;
+  }
+});
 $('#season-rows').addEventListener('click', (e) => {
   const btn = e.target.closest('[data-remove-season]');
   if (!btn) return;

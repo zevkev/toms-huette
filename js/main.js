@@ -457,7 +457,7 @@ function renderPrices() {
   // Saisons zu Preisstufen zusammenfassen (gleicher Name, Preis und Farbe), günstigste zuerst
   const tiers = [];
   seasons.forEach((x) => {
-    if (!tiers.some((t) => t.name === x.name && t.price === x.price && t.color === x.color)) tiers.push(x);
+    if (!tiers.some((t) => t.color === x.color)) tiers.push(x);
   });
   tiers.sort((a, b) => a.price - b.price);
   $('#season-list').innerHTML = tiers.map((x) => `<li><i style="--season:${esc(x.color)}"></i><span><strong>${esc(x.name)}</strong></span><b>${P.euro.format(x.price)}</b></li>`).join('');
@@ -475,7 +475,7 @@ function renderPrices() {
 
   const legend = $('#cal-legend');
   $$('.lg-season', legend).forEach((el) => el.remove());
-  legend.insertAdjacentHTML('beforeend', tiers.map((x) => `<span class="lg lg-season"><i style="--season:${esc(x.color)}"></i>${esc(x.name)}</span>`).join(''));
+  legend.insertAdjacentHTML('beforeend', tiers.map((x) => `<span class="lg lg-season"><i style="--season:${esc(x.color)}"></i>${esc(x.name)} ${P.euro.format(x.price)}</span>`).join(''));
 
   limitPersons();
   setDateLimits(arrival, departure);

@@ -58,12 +58,13 @@ export const DEFAULT_IMAGES = {
 };
 
 // Feste Farbtabelle für Saisons, damit der Kalender einheitlich bleibt
+// Eine Farbe steht immer für eine Saison
 export const SEASON_PALETTE = [
-  { name: 'Gelb', color: HAUPT },
-  { name: 'Grün', color: MITTEL },
-  { name: 'Blau', color: NEBEN },
-  { name: 'Koralle', color: '#e98a6b' },
-  { name: 'Lila', color: '#9b8be8' },
-  { name: 'Rosa', color: '#ef8fb7' },
+  { name: 'Nebensaison', color: NEBEN },
+  { name: 'Zwischensaison', color: MITTEL },
+  { name: 'Hauptsaison', color: HAUPT },
+  { name: 'Sonderpreis', color: '#e98a6b' },
+  { name: 'Feiertage', color: '#9b8be8' },
+  { name: 'Aktion', color: '#ef8fb7' },
 ];
 export const SEASON_COLORS = SEASON_PALETTE.map((p) => p.color);
