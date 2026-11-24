@@ -1,0 +1,34 @@
+rules_version = '2';
+
+// Sicherheitsregeln für Toms Hütte.
+// ADMIN_UID durch die UID Ihres Admin-Kontos ersetzen (Firebase Console > Authentication > Users).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && request.auth.uid == 'ADMIN_UID';
+    }
+
+    // Öffentlich lesbar: Preise, Belegung (nur Datumsangaben) und Bilder
+    match /site/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /bookings/{id} {
+      allow read: if true;
+      allow write: if isAdmin()
+        && request.resource.data.keys().hasOnly(['from', 'to'])
+        && request.resource.data.from is string
+        && request.resource.data.to is string;
+      allow delete: if isAdmin();
+    }
+    match /images/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Privat: Notizen zu Buchungen sieht nur der Admin
+    match /bookingNotes/{id} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

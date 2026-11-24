@@ -1,0 +1,57 @@
+name: Website veröffentlichen
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Website zusammenstellen
+        run: |
+          mkdir _site
+          cp -r index.html admin.html impressum.html datenschutz.html robots.txt css js images _site/
+          rm -f _site/js/firebase-config.example.js
+
+      - name: Firebase-Konfiguration aus GitHub Secrets schreiben
+        env:
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+        run: |
+          if [ -z "$FIREBASE_API_KEY" ] || [ -z "$FIREBASE_PROJECT_ID" ]; then
+            echo "::warning::Firebase-Secrets fehlen. Die Website läuft dann mit den Standardpreisen."
+            exit 0
+          fi
+          cat > _site/js/firebase-config.js <<CONFIG
+          export const firebaseConfig = {
+            apiKey: '${FIREBASE_API_KEY}',
+            authDomain: '${FIREBASE_AUTH_DOMAIN}',
+            projectId: '${FIREBASE_PROJECT_ID}',
+            appId: '${FIREBASE_APP_ID}',
+          };
+          CONFIG
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

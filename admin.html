@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Verwaltung | Toms Hütte</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#15586b">
+  <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin">
+
+<header class="admin-header">
+  <div class="container admin-header-inner">
+    <a class="brand" href="index.html" title="Zur Website">
+      <img class="brand-logo" src="images/favicon.svg" alt="" width="44" height="44">
+      <span class="brand-text">
+        <span class="brand-name">Toms Hütte</span>
+        <span class="brand-sub">Verwaltung</span>
+      </span>
+    </a>
+    <div class="admin-user" id="admin-user" hidden>
+      <span class="admin-email" id="admin-email"></span>
+      <a class="btn btn-outline btn-sm" href="index.html" target="_blank" rel="noopener">Website ansehen</a>
+      <button class="btn btn-primary btn-sm" type="button" id="logout">Abmelden</button>
+    </div>
+  </div>
+</header>
+
+<p class="demo-banner" id="demo-banner" hidden>
+  <strong>Demo-Modus:</strong> Firebase ist noch nicht eingerichtet. Alle Änderungen werden nur in diesem Browser gespeichert.
+  Die Einrichtung ist in der Datei <code>ANLEITUNG.md</code> beschrieben.
+</p>
+
+<main class="admin-main">
+
+  <!-- Anmeldung -->
+  <section class="login-card" id="login-view" hidden>
+    <img src="images/favicon.svg" alt="" width="84" height="84" class="login-logo">
+    <h1>Verwaltung</h1>
+    <p class="muted">Nur für den Vermieter. Bitte melden Sie sich mit Ihrer Admin-E-Mail und Ihrem Passwort an.</p>
+    <form id="login-form" novalidate>
+      <div class="field">
+        <label for="login-email">E-Mail</label>
+        <input type="email" id="login-email" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="login-password">Passwort</label>
+        <input type="password" id="login-password" autocomplete="current-password" required>
+      </div>
+      <p class="form-error" id="login-error" role="alert" hidden></p>
+      <button class="btn btn-primary btn-block btn-lg" type="submit" id="login-btn">Anmelden</button>
+      <p class="muted small" id="demo-login-hint" hidden>Im Demo-Modus genügt ein Klick auf „Anmelden“.</p>
+    </form>
+  </section>
+
+  <!-- Verwaltung -->
+  <div class="container" id="app-view" hidden>
+    <nav class="admin-tabs" role="tablist" aria-label="Bereiche">
+      <button type="button" role="tab" data-tab="belegung" aria-selected="true">Belegung</button>
+      <button type="button" role="tab" data-tab="preise" aria-selected="false">Preise &amp; Saisons</button>
+      <button type="button" role="tab" data-tab="bilder" aria-selected="false">Bilder</button>
+    </nav>
+
+    <!-- Belegung -->
+    <section class="admin-panel" data-panel="belegung" role="tabpanel">
+      <div class="admin-grid">
+        <div class="admin-card">
+          <h2>Belegungskalender</h2>
+          <p class="muted">Klicken Sie auf den Anreisetag und danach auf den Abreisetag. Der Zeitraum wird rechts übernommen.</p>
+          <div class="calendar" id="admin-calendar"></div>
+        </div>
+
+        <div class="admin-card">
+          <h2>Buchung eintragen</h2>
+          <form id="booking-form" class="admin-form" novalidate>
+            <div class="row-2">
+              <div class="field"><label for="b-from">Anreise</label><input type="date" id="b-from" required></div>
+              <div class="field"><label for="b-to">Abreise</label><input type="date" id="b-to" required></div>
+            </div>
+            <div class="field">
+              <label for="b-note">Notiz <span class="optional">(nur für Sie sichtbar)</span></label>
+              <input type="text" id="b-note" maxlength="200" placeholder="z. B. Familie Muster, 3 Personen">
+            </div>
+            <p class="admin-info" id="b-info"></p>
+            <button class="btn btn-primary btn-block" type="submit">Als belegt eintragen</button>
+          </form>
+
+          <div class="list-head">
+            <h3>Buchungen</h3>
+            <label class="check"><input type="checkbox" id="show-past"> vergangene zeigen</label>
+          </div>
+          <ul class="booking-list" id="booking-list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Preise -->
+    <section class="admin-panel" data-panel="preise" role="tabpanel" hidden>
+      <form id="price-form" class="admin-form" novalidate>
+        <div class="admin-grid">
+          <div class="admin-card">
+            <h2>Grundeinstellungen</h2>
+            <div class="row-2">
+              <div class="field"><label for="p-basePersons">Personen im Grundpreis</label><input type="number" id="p-basePersons" name="basePersons" min="1" max="10"></div>
+              <div class="field"><label for="p-extraPerson">Aufpreis je weitere Person / Nacht (€)</label><input type="number" id="p-extraPerson" name="extraPerson" min="0" step="1"></div>
+              <div class="field"><label for="p-maxPersons">Maximale Personen</label><input type="number" id="p-maxPersons" name="maxPersons" min="1" max="10"></div>
+              <div class="field"><label for="p-minNights">Mindestaufenthalt (Nächte)</label><input type="number" id="p-minNights" name="minNights" min="1" max="60"></div>
+              <div class="field"><label for="p-maxAdvanceDays">Vorausbuchung bis (Tage)</label><input type="number" id="p-maxAdvanceDays" name="maxAdvanceDays" min="30" max="1095"></div>
+            </div>
+
+            <h2 class="mt">Pauschale</h2>
+            <div class="fee-row">
+              <label class="switch">
+                <input type="checkbox" id="p-feeEnabled" name="feeEnabled">
+                <span class="switch-track" aria-hidden="true"></span>
+                <span class="switch-label" id="fee-state">Pauschale an</span>
+              </label>
+              <div class="field fee-amount"><label for="p-fee">Betrag (€)</label><input type="number" id="p-fee" name="fee" min="0" step="1"></div>
+            </div>
+            <p class="muted small">Die Pauschale wird einmal pro Aufenthalt berechnet. Ist sie aus, verschwindet sie überall auf der Website.</p>
+          </div>
+
+          <div class="admin-card">
+            <h2>Preise pro Nacht nach Monat</h2>
+            <p class="muted">Gilt für die Personen im Grundpreis, wenn an dem Tag keine Saison eingetragen ist.</p>
+            <div class="month-inputs" id="month-inputs"></div>
+            <div class="set-all">
+              <input type="number" id="all-months" min="0" placeholder="Preis" aria-label="Preis für alle Monate">
+              <button class="btn btn-outline btn-sm" type="button" id="apply-all">Für alle Monate übernehmen</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <div class="list-head">
+            <h2>Saisonzeiten</h2>
+            <button class="btn btn-outline btn-sm" type="button" id="add-season">+ Saison hinzufügen</button>
+          </div>
+          <p class="muted">Saisonpreise gelten vorrangig vor dem Monatspreis und werden im Buchungskalender in ihrer Farbe angezeigt.</p>
+          <div class="season-table" id="season-rows"></div>
+        </div>
+
+        <div class="save-bar">
+          <span class="save-state" id="save-state">Alle Änderungen gespeichert</span>
+          <button class="btn btn-primary" type="submit">Speichern</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Bilder -->
+    <section class="admin-panel" data-panel="bilder" role="tabpanel" hidden>
+      <p class="muted">Bilder werden beim Hochladen automatisch verkleinert und komprimiert. Geeignet sind JPG, PNG und WebP.</p>
+      <div id="image-sections"></div>
+    </section>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="js/admin.js"></script>
+</body>
+</html>
