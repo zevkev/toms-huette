@@ -7,6 +7,7 @@ const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+const ADMIN_DOMAIN = 'toms-huette-borkum.firebaseapp.com';
 const store = await createStore({ admin: true });
 const isDemo = store.mode === 'demo';
 
@@ -52,14 +53,16 @@ loginForm.addEventListener('submit', async (e) => {
   btn.disabled = true;
   btn.textContent = 'Anmeldung läuft …';
   try {
-    await store.login($('#login-email').value.trim(), $('#login-password').value);
+    // Benutzername ohne @ wird intern zu einer Firebase-Adresse ergänzt (z. B. silkeadmin)
+    const name = $('#login-email').value.trim().toLowerCase();
+    await store.login(name.includes('@') ? name : `${name}@${ADMIN_DOMAIN}`, $('#login-password').value);
   } catch (ex) {
     const code = ex?.code || '';
     err.textContent = code.includes('too-many-requests')
       ? 'Zu viele Versuche. Bitte warten Sie einige Minuten.'
       : code.includes('network')
         ? 'Keine Verbindung. Bitte prüfen Sie Ihre Internetverbindung.'
-        : 'E-Mail oder Passwort ist falsch.';
+        : 'Benutzername oder Passwort ist falsch.';
     err.hidden = false;
   } finally {
     btn.disabled = false;
@@ -428,7 +431,7 @@ store.onAuth(async (user) => {
   $('#app-view').hidden = !user;
   $('#admin-user').hidden = !user;
   if (!user) { $('#login-password').value = ''; return; }
-  $('#admin-email').textContent = user.email || '';
+  $('#admin-email').textContent = (user.email || '').replace(`@${ADMIN_DOMAIN}`, '');
   await loadAll();
 });
 
