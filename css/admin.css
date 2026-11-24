@@ -189,3 +189,10 @@ body.admin { background: var(--sand-50); min-height: 100vh; }
   .img-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .list-head .btn { width: 100%; }
 }
+
+/* Handy: Von und Bis untereinander, damit das Datum nicht abgeschnitten wird */
+@media (max-width: 760px) {
+  .season-row, .season-row.extra-row { grid-template-areas: "name name del" "from from from" "to to to" "price price price" "color color color"; }
+  .season-row.extra-row { grid-template-areas: "name name del" "from from from" "to to to" "price price price"; }
+  .season-row .f-to { grid-column: auto; }
+}
