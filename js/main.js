@@ -432,11 +432,16 @@ function renderPrices() {
   setAll('[data-fee]', P.euro.format(s.fee));
   setAll('[data-price-note]', `für ${s.basePersons} Personen${s.feeEnabled ? ` · zzgl. einmalig ${P.euro.format(s.fee)} Pauschale` : ''}`);
   $$('[data-fee-row]').forEach((el) => { el.hidden = !s.feeEnabled; });
-  $('#extras-rows').innerHTML = (s.extras || []).filter((x) => x.active).map((x) => `
-    <div class="price-row">
-      <div><p class="price-label">${esc(x.name)}</p><p class="price-hint">${P.EXTRA_UNITS[x.unit] || ''}</p></div>
-      <p class="price-value">${P.euro.format(x.price)}</p>
-    </div>`).join('');
+  // Zusatzkosten kompakt: eine Zeile, Details zum Aufklappen
+  const activeExtras = (s.extras || []).filter((x) => x.active);
+  $('#extras-rows').innerHTML = activeExtras.length ? `
+    <details class="extras-info">
+      <summary>
+        <span><span class="price-label">Zusatzkosten</span><span class="price-hint">${activeExtras.length} Posten, im Richtpreis enthalten</span></span>
+        <span class="info-btn" aria-hidden="true">i</span>
+      </summary>
+      <ul>${activeExtras.map((x) => `<li><span>${esc(x.name)} <small>${P.EXTRA_UNITS[x.unit] || ''}</small></span><b>${P.euro.format(x.price)}</b></li>`).join('')}</ul>
+    </details>` : '';
   $$('[data-max-persons-input]').forEach((el) => { el.max = s.maxPersons; });
 
   const today = P.todayISO();
@@ -449,14 +454,28 @@ function renderPrices() {
     if (!P.seasonFor(s, d)) openMonths.add(P.parseISO(d).getMonth());
   }
   const monthList = seasons.length ? [...openMonths].sort((a, b) => a - b) : s.months.map((_, i) => i);
+  // Saisons zu Preisstufen zusammenfassen (gleicher Name, Preis und Farbe), günstigste zuerst
+  const tiers = [];
+  seasons.forEach((x) => {
+    if (!tiers.some((t) => t.name === x.name && t.price === x.price && t.color === x.color)) tiers.push(x);
+  });
+  tiers.sort((a, b) => a.price - b.price);
+  $('#season-list').innerHTML = tiers.map((x) => `<li><i style="--season:${esc(x.color)}"></i><span><strong>${esc(x.name)}</strong></span><b>${P.euro.format(x.price)}</b></li>`).join('');
+
+  // Übrige Zeiten ohne Saison: bei einheitlichem Preis nur eine Zeile
+  const openPrices = [...new Set(monthList.map((i) => s.months[i]))];
   $('#month-wrap').hidden = !monthList.length;
-  $('#month-title').textContent = seasons.length ? 'Übrige Zeiten, Preis pro Nacht' : 'Preise pro Nacht nach Monat';
-  $('#month-grid').innerHTML = monthList.map((i) => `<div class="month-cell"><span>${P.MONTHS[i].slice(0, 3)}</span><strong>${P.euro.format(s.months[i])}</strong></div>`).join('');
-  $('#season-list').innerHTML = seasons.map((x) => `<li><i style="--season:${esc(x.color)}"></i><span><strong>${esc(x.name)}</strong><small>${P.formatDate(x.from)} bis ${P.formatDate(x.to)}</small></span><b>${P.euro.format(x.price)}</b></li>`).join('');
+  if (seasons.length && openPrices.length === 1) {
+    $('#month-title').textContent = '';
+    $('#month-grid').innerHTML = `<p class="rest-price">Übrige Zeiten: <b>${P.euro.format(openPrices[0])}</b> pro Nacht</p>`;
+  } else {
+    $('#month-title').textContent = seasons.length ? 'Übrige Zeiten, Preis pro Nacht' : 'Preise pro Nacht nach Monat';
+    $('#month-grid').innerHTML = monthList.map((i) => `<div class="month-cell"><span>${P.MONTHS[i].slice(0, 3)}</span><strong>${P.euro.format(s.months[i])}</strong></div>`).join('');
+  }
 
   const legend = $('#cal-legend');
   $$('.lg-season', legend).forEach((el) => el.remove());
-  legend.insertAdjacentHTML('beforeend', seasons.map((x) => `<span class="lg lg-season"><i style="--season:${esc(x.color)}"></i>${esc(x.name)}</span>`).join(''));
+  legend.insertAdjacentHTML('beforeend', tiers.map((x) => `<span class="lg lg-season"><i style="--season:${esc(x.color)}"></i>${esc(x.name)}</span>`).join(''));
 
   limitPersons();
   setDateLimits(arrival, departure);

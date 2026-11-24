@@ -1596,3 +1596,33 @@ input[type="range"]::-moz-range-thumb {
 .cal-day.is-off { background: #eef1f2; border-color: #e3e8ea; color: #a9b5ba; }
 .cal-day.is-off.is-booked { background: #f3c9c5; border-color: #f3c9c5; color: var(--white); }
 .lg-blocked { background: #d9dee1; border: 1.5px solid #c3cacd; }
+
+/* Kalender: Symbole für Ferien und Feiertage, Infozeile */
+.cal-day { position: relative; }
+.cal-mark { position: absolute; top: 1px; font-style: normal; font-size: .62rem; line-height: 1; pointer-events: none; }
+.cal-mark--ferien { left: 3px; color: #c98a00; }
+.cal-mark--holiday { right: 3px; color: #b8452f; }
+.cal-day.is-booked .cal-mark, .cal-day.is-start .cal-mark, .cal-day.is-end .cal-mark { color: var(--white); }
+.cal-day[aria-disabled="true"] { cursor: default; }
+.cal-day[aria-disabled="true"]:hover { transform: none; border-color: #e3e8ea; }
+.cal-info { margin: 14px 0 0; padding: 10px 14px; border-radius: 12px; background: var(--sky-50); border: 1px solid var(--sky-200); font-size: .9rem; color: var(--ink-soft); min-height: 2.6em; }
+.lg-icon { display: inline-grid; place-items: center; width: 18px; height: 18px; font-size: .8rem; color: #c98a00; }
+.lg:last-child .lg-icon { color: #b8452f; }
+
+/* Zusatzkosten als Info zum Aufklappen */
+.extras-info { padding: 14px 0; border-bottom: 1px dashed var(--line); }
+.extras-info summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; list-style: none; }
+.extras-info summary::-webkit-details-marker { display: none; }
+.extras-info summary > span:first-child { display: flex; flex-direction: column; }
+.info-btn { display: grid; place-items: center; width: 30px; height: 30px; flex: none; border-radius: 50%; border: 1.5px solid var(--blue); color: var(--blue); font-family: var(--font-serif); font-weight: 700; font-style: italic; transition: background-color .2s, color .2s; }
+.extras-info[open] .info-btn { background: var(--blue); color: var(--white); }
+.extras-info ul { list-style: none; margin: 12px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--sky-50); display: grid; gap: 8px; }
+.extras-info li { display: flex; justify-content: space-between; gap: 12px; font-size: .95rem; }
+.extras-info li small { color: var(--ink-soft); }
+
+/* Kompakte Preisstufen */
+.season-list { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.season-list li { padding: 10px 12px; }
+.month-grid:has(.rest-price) { display: block; }
+.rest-price { margin: 0; padding: 10px 14px; border-radius: 12px; background: var(--white); border: 1px solid var(--line); color: var(--ink-soft); }
+.rest-price b { color: var(--petrol-900); font-family: var(--font-serif); font-size: 1.1rem; }

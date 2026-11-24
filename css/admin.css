@@ -151,3 +151,41 @@ body.admin { background: var(--sand-50); min-height: 100vh; }
 .mini-switch input:checked + span { background: #2e9b6a; }
 .mini-switch input:checked + span::after { transform: translateX(20px); }
 .admin .field select { width: 100%; min-height: 46px; padding: .6em .7em; border: 1.5px solid var(--line); border-radius: 12px; background: var(--white); font: inherit; font-size: 16px; }
+
+/* Saison- und Zusatzkosten-Zeilen: Desktop nebeneinander, Handy untereinander */
+.season-row { grid-template-columns: minmax(140px, 1.4fr) minmax(130px, 1fr) minmax(130px, 1fr) minmax(90px, .7fr) 38px; grid-template-areas: "name from to price del" "color color color color color"; align-items: end; }
+.season-row.extra-row { grid-template-areas: "name from to price del"; }
+.season-row .f-name { grid-area: name; }
+.season-row .f-from { grid-area: from; }
+.season-row .f-to { grid-area: to; }
+.season-row .f-price { grid-area: price; }
+.season-row .f-color { grid-area: color; }
+.season-row .f-del { grid-area: del; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.swatch { position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 6px; border: 1.5px solid var(--line); border-radius: 999px; background: var(--white); cursor: pointer; font-size: .85rem; }
+.swatch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.swatch span { width: 22px; height: 22px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+.swatch em { font-style: normal; color: var(--ink-soft); }
+.swatch:has(input:checked) { border-color: var(--petrol); background: var(--sky-50); }
+.swatch:has(input:checked) em { color: var(--petrol-900); font-weight: 650; }
+.swatch input:focus-visible + span { outline: 3px solid var(--sky); outline-offset: 2px; }
+@media (max-width: 760px) {
+  .season-row, .season-row.extra-row {
+    grid-template-columns: 1fr 1fr 38px;
+    grid-template-areas: "name name del" "from to to" "price price price" "color color color";
+  }
+  .season-row.extra-row { grid-template-areas: "name name del" "from to to" "price price price"; }
+  .season-row .f-to { grid-column: 2 / 4; }
+}
+@media (max-width: 600px) {
+  .admin-main { padding-top: 16px; }
+  .admin-card { padding: 16px; border-radius: 18px; }
+  .admin-tabs button { padding: .7em .8em; font-size: .92rem; }
+  .admin-header-inner { min-height: 60px; }
+  .admin-header .brand-sub { display: none; }
+  .admin-user .admin-email { display: none; }
+  .save-bar { left: 0; right: 0; border-radius: 16px; padding: 10px 10px 10px 16px; }
+  .fee-row { gap: 12px; }
+  .img-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .list-head .btn { width: 100%; }
+}

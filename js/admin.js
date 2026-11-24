@@ -1,5 +1,5 @@
 import { createStore, normalizeSettings } from './store.js';
-import { SECTIONS, DEFAULT_IMAGES, SEASON_COLORS } from './config-defaults.js';
+import { SECTIONS, DEFAULT_IMAGES, SEASON_COLORS, SEASON_PALETTE } from './config-defaults.js';
 import * as P from './pricing.js';
 import { createCalendar } from './calendar.js';
 
@@ -260,12 +260,11 @@ const updateFeeState = () => {
 function extraRow(x = {}) {
   const units = Object.entries(P.EXTRA_UNITS).map(([k, v]) => `<option value="${k}" ${x.unit === k ? 'selected' : ''}>${v}</option>`).join('');
   return `<div class="season-row extra-row">
-    <div class="field"><label>Aktiv</label><label class="mini-switch"><input type="checkbox" class="x-active" ${x.active !== false ? 'checked' : ''}><span></span></label></div>
-    <div class="field"><label>Bezeichnung</label><input type="text" class="x-name" value="${esc(x.name || '')}" placeholder="z. B. Endreinigung"></div>
-    <div class="field s-from"><label>Preis (€)</label><input type="number" class="x-price" min="0" step="0.5" value="${esc(x.price ?? '')}"></div>
-    <div class="field s-to"><label>Abrechnung</label><select class="x-unit">${units}</select></div>
-    <div class="field s-price"></div>
-    <button class="icon-btn danger" type="button" data-remove-extra title="Posten entfernen" aria-label="Posten entfernen">✕</button>
+    <div class="field f-name"><label>Bezeichnung</label><input type="text" class="x-name" value="${esc(x.name || '')}" placeholder="z. B. Endreinigung"></div>
+    <div class="field f-from"><label>Preis (€)</label><input type="number" class="x-price" min="0" step="0.5" inputmode="decimal" value="${esc(x.price ?? '')}"></div>
+    <div class="field f-to"><label>Abrechnung</label><select class="x-unit">${units}</select></div>
+    <div class="field f-price"><label>Aktiv</label><label class="mini-switch"><input type="checkbox" class="x-active" ${x.active !== false ? 'checked' : ''}><span></span></label></div>
+    <button class="icon-btn danger f-del" type="button" data-remove-extra title="Posten entfernen" aria-label="Posten entfernen">✕</button>
   </div>`;
 }
 const renderExtraEmpty = () => {
@@ -273,14 +272,21 @@ const renderExtraEmpty = () => {
   if (!$('.extra-row', rows)) rows.innerHTML = '<p class="season-empty">Keine Zusatzkosten eingetragen.</p>';
 };
 
+let rowCounter = 0;
 function seasonRow(s = {}) {
+  const id = `c${rowCounter++}`;
+  const current = SEASON_COLORS.includes(s.color) ? s.color : SEASON_COLORS[0];
+  const swatches = SEASON_PALETTE.map((p) => `<label class="swatch" title="${p.name}">
+      <input type="radio" name="${id}" class="s-color" value="${p.color}" ${p.color === current ? 'checked' : ''}>
+      <span style="--c:${p.color}"></span><em>${p.name}</em>
+    </label>`).join('');
   return `<div class="season-row">
-    <div class="field"><label>Farbe</label><input type="color" class="s-color" value="${esc(s.color || SEASON_COLORS[0])}"></div>
-    <div class="field"><label>Name</label><input type="text" class="s-name" value="${esc(s.name || '')}" placeholder="z. B. Hauptsaison"></div>
-    <div class="field s-from"><label>Von</label><input type="date" class="s-from-in" value="${esc(s.from || '')}"></div>
-    <div class="field s-to"><label>Bis einschließlich</label><input type="date" class="s-to-in" value="${esc(s.to || '')}"></div>
-    <div class="field s-price"><label>Preis / Nacht (€)</label><input type="number" class="s-price-in" min="0" value="${esc(s.price ?? '')}"></div>
-    <button class="icon-btn danger" type="button" data-remove-season title="Saison entfernen" aria-label="Saison entfernen">✕</button>
+    <div class="field f-name"><label>Name</label><input type="text" class="s-name" value="${esc(s.name || '')}" placeholder="z. B. Hauptsaison"></div>
+    <div class="field f-from"><label>Von</label><input type="date" class="s-from-in" value="${esc(s.from || '')}"></div>
+    <div class="field f-to"><label>Bis einschließlich</label><input type="date" class="s-to-in" value="${esc(s.to || '')}"></div>
+    <div class="field f-price"><label>Preis / Nacht (€)</label><input type="number" class="s-price-in" min="0" inputmode="decimal" value="${esc(s.price ?? '')}"></div>
+    <div class="field f-color"><label>Farbe im Kalender</label><div class="swatches">${swatches}</div></div>
+    <button class="icon-btn danger f-del" type="button" data-remove-season title="Saison entfernen" aria-label="Saison entfernen">✕</button>
   </div>`;
 }
 const renderSeasonEmpty = () => {
@@ -363,7 +369,7 @@ priceForm.addEventListener('submit', async (e) => {
       from: $('.s-from-in', row).value,
       to: $('.s-to-in', row).value,
       price: Number($('.s-price-in', row).value) || 0,
-      color: $('.s-color', row).value,
+      color: ($('.s-color:checked', row) || $('.s-color', row)).value,
     };
     const bad = !season.from || !season.to || season.to < season.from || season.price <= 0;
     row.classList.toggle('is-invalid', bad);

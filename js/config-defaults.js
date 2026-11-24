@@ -57,4 +57,13 @@ export const DEFAULT_IMAGES = {
   lage: [{ src: 'images/balkon.webp', caption: 'Balkon von Toms Hütte' }],
 };
 
-export const SEASON_COLORS = [HAUPT, MITTEL, NEBEN, '#e98a6b', '#9b8be8'];
+// Feste Farbtabelle für Saisons, damit der Kalender einheitlich bleibt
+export const SEASON_PALETTE = [
+  { name: 'Gelb', color: HAUPT },
+  { name: 'Grün', color: MITTEL },
+  { name: 'Blau', color: NEBEN },
+  { name: 'Koralle', color: '#e98a6b' },
+  { name: 'Lila', color: '#9b8be8' },
+  { name: 'Rosa', color: '#ef8fb7' },
+];
+export const SEASON_COLORS = SEASON_PALETTE.map((p) => p.color);
