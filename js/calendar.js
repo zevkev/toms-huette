@@ -1,5 +1,5 @@
 // Belegungskalender für Website und Verwaltung.
-import { toISO, parseISO, todayISO, isNightBooked, seasonFor, lastBookableISO, nightPrice, euro } from './pricing.js';
+import { toISO, parseISO, todayISO, isNightBooked, blockFor, seasonFor, lastBookableISO, nightPrice, euro } from './pricing.js';
 
 const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 const monthTitle = new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric' });
@@ -39,17 +39,19 @@ export function createCalendar(root, { getData, onPick, admin = false }) {
       for (let d = 1; d <= days; d++) {
         const iso = toISO(new Date(month.getFullYear(), month.getMonth(), d));
         const booked = isNightBooked(bookings, iso);
+        const blocked = !booked && Boolean(blockFor(s, iso));
         const season = seasonFor(s, iso);
         const off = !admin && (iso < today || iso > last);
         const cls = ['cal-day'];
         if (off) cls.push('is-off');
         if (booked) cls.push('is-booked');
+        if (blocked) cls.push('is-blocked');
         if (season) cls.push('is-season');
         if (iso === today) cls.push('is-today');
         if (selection.from === iso) cls.push('is-start');
         if (selection.to === iso) cls.push('is-end');
         if (selection.from && selection.to && selection.from < iso && iso < selection.to) cls.push('is-range');
-        const title = booked ? 'Ausgebucht' : `${euro.format(nightPrice(s, iso))} pro Nacht${season ? `, ${season.name}` : ''}`;
+        const title = booked ? 'Ausgebucht' : blocked ? 'Nicht buchbar' : `${euro.format(nightPrice(s, iso))} pro Nacht${season ? `, ${season.name}` : ''}`;
         html += `<button type="button" class="${cls.join(' ')}" data-date="${iso}" ${off ? 'disabled' : ''} title="${title}"${season ? ` style="--season:${season.color}"` : ''}><span>${d}</span></button>`;
       }
       html += '</div></div>';

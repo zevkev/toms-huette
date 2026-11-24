@@ -13,6 +13,8 @@ export const DEFAULT_SETTINGS = {
   maxAdvanceDays: 365,  // so weit im Voraus kann angefragt werden
   feeEnabled: true,
   fee: 100,
+  blocked: [],          // nicht buchbare Zeiträume { from, to } (einschließlich)
+  extras: [],           // Zusatzkosten { name, price, unit: stay|night|person|personNight, active }
   // Preisliste 2027/2028: { name, from: 'JJJJ-MM-TT', to: 'JJJJ-MM-TT' (einschließlich), price, color }
   seasons: [
     { name: 'Nebensaison', from: '2027-01-07', to: '2027-02-28', price: 75, color: NEBEN },
@@ -39,14 +41,11 @@ export const DEFAULT_IMAGES = {
   hero: [{ src: 'images/duenen.webp', caption: 'Dünen und Strand auf Borkum' }],
   wohnung: [
     { src: 'images/schlafzimmer.webp', caption: 'Schlafzimmer mit Doppelbett' },
-    { src: 'images/wohnzimmer-2.webp', caption: 'Wohnzimmer mit Eck-Schlafcouch' },
+    { src: 'images/kleiderschrank.webp', caption: 'Schrank im Schlafzimmer' },
   ],
   galerie: [
     { src: 'images/schlafzimmer.webp', caption: 'Schlafzimmer' },
-    { src: 'images/kleiderschrank.webp', caption: 'Kleiderschrank' },
-    { src: 'images/wohnzimmer-2.webp', caption: 'Wohnzimmer' },
-    { src: 'images/wohnzimmer-3.webp', caption: 'Eck-Schlafcouch' },
-    { src: 'images/wohnzimmer.webp', caption: 'Sitzecke' },
+    { src: 'images/kleiderschrank.webp', caption: 'Schrank im Schlafzimmer' },
     { src: 'images/kueche.webp', caption: 'Küche' },
     { src: 'images/bad.webp', caption: 'Badezimmer' },
     { src: 'images/balkon.webp', caption: 'Balkon' },

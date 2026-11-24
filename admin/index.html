@@ -72,22 +72,26 @@
         </div>
 
         <div class="admin-card">
-          <h2>Buchung eintragen</h2>
+          <h2>Zeitraum eintragen</h2>
           <form id="booking-form" class="admin-form" novalidate>
-            <div class="row-2">
-              <div class="field"><label for="b-from">Anreise</label><input type="date" id="b-from" required></div>
-              <div class="field"><label for="b-to">Abreise</label><input type="date" id="b-to" required></div>
+            <div class="type-toggle" role="radiogroup" aria-label="Art des Eintrags">
+              <label><input type="radio" name="b-type" value="booking" checked><span><i class="dot dot-booked"></i>Belegt (Buchung)</span></label>
+              <label><input type="radio" name="b-type" value="blocked"><span><i class="dot dot-blocked"></i>Nicht buchbar</span></label>
             </div>
-            <div class="field">
+            <div class="row-2">
+              <div class="field"><label for="b-from" id="b-from-label">Anreise</label><input type="date" id="b-from" required></div>
+              <div class="field"><label for="b-to" id="b-to-label">Abreise</label><input type="date" id="b-to" required></div>
+            </div>
+            <div class="field" id="b-note-field">
               <label for="b-note">Notiz <span class="optional">(nur für Sie sichtbar)</span></label>
               <input type="text" id="b-note" maxlength="200" placeholder="z. B. Familie Muster, 3 Personen">
             </div>
             <p class="admin-info" id="b-info"></p>
-            <button class="btn btn-primary btn-block" type="submit">Als belegt eintragen</button>
+            <button class="btn btn-primary btn-block" type="submit" id="b-submit">Als belegt eintragen</button>
           </form>
 
           <div class="list-head">
-            <h3>Buchungen</h3>
+            <h3>Eingetragene Zeiträume</h3>
             <label class="check"><input type="checkbox" id="show-past"> vergangene zeigen</label>
           </div>
           <ul class="booking-list" id="booking-list"></ul>
@@ -130,6 +134,15 @@
               <button class="btn btn-outline btn-sm" type="button" id="apply-all">Für alle Monate übernehmen</button>
             </div>
           </div>
+        </div>
+
+        <div class="admin-card">
+          <div class="list-head">
+            <h2>Zusatzkosten</h2>
+            <button class="btn btn-outline btn-sm" type="button" id="add-extra">+ Zusatzkosten hinzufügen</button>
+          </div>
+          <p class="muted">Zum Beispiel Endreinigung, Bettwäsche, Handtücher oder Kurtaxe. Aktive Posten stehen auf der Website und werden in jeden Preis eingerechnet.</p>
+          <div class="season-table" id="extra-rows"></div>
         </div>
 
         <div class="admin-card">

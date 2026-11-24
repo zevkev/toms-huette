@@ -201,6 +201,7 @@ const quoteText = (q, persons) => {
   const parts = [`${P.nightsLabel(q.nights)} × Übernachtung ${P.euro.format(q.lodging)}`];
   if (q.extra) parts.push(`${q.extraPersons} weitere Person${q.extraPersons > 1 ? 'en' : ''} ${P.euro.format(q.extra)}`);
   if (q.fee) parts.push(`Pauschale ${P.euro.format(q.fee)}`);
+  q.extras.forEach((x) => parts.push(`${esc(x.name)} ${P.euro.format(x.amount)}`));
   return `${parts.join(' + ')} = <strong>ca. ${P.euro.format(q.total)}</strong> für ${P.personsLabel(persons)}`;
 };
 
@@ -273,6 +274,7 @@ const buildInquiry = () => {
   ];
   if (q.extra) lines.push(`Weitere Personen: ${P.euro.format(q.extra)}`);
   if (q.fee) lines.push(`Pauschale: ${P.euro.format(q.fee)}`);
+  q.extras.forEach((x) => lines.push(`${x.name}: ${P.euro.format(x.amount)}`));
   lines.push(`Gesamt: ${P.euro.format(q.total)}`, '', `Name: ${f.name.value.trim()}`, `E-Mail: ${f.email.value.trim()}`);
   if (f.phone.value.trim()) lines.push(`Telefon: ${f.phone.value.trim()}`);
   if (f.message.value.trim()) lines.push('', 'Nachricht:', f.message.value.trim());
@@ -329,11 +331,12 @@ const updateQuick = () => {
   }
   const q = P.quote(s, qArrival.value, qDeparture.value, persons);
   if (q) {
-    label.textContent = `${P.nightsLabel(q.nights)}, ${P.personsLabel(persons)}${q.fee ? ', inkl. Pauschale' : ''}`;
+    label.textContent = `${P.nightsLabel(q.nights)}, ${P.personsLabel(persons)}${q.fee || q.extras.length ? ', inkl. Nebenkosten' : ''}`;
     value.textContent = P.euro.format(q.total);
   } else {
     const n = s.minNights;
-    const example = P.minNightPrice(s) * n + Math.max(0, persons - s.basePersons) * s.extraPerson * n + (s.feeEnabled ? s.fee : 0);
+    const extrasSum = s.extras.filter((x) => x.active).reduce((sum, x) => sum + P.extraAmount(x, n, persons), 0);
+    const example = P.minNightPrice(s) * n + Math.max(0, persons - s.basePersons) * s.extraPerson * n + (s.feeEnabled ? s.fee : 0) + extrasSum;
     label.textContent = `${P.nightsLabel(n)}, ${P.personsLabel(persons)}, ab`;
     value.textContent = P.euro.format(example);
   }
@@ -371,8 +374,8 @@ function pickDate(iso) {
   const s = state.settings;
   const sel = state.selection;
   if (!sel.from || sel.to || iso <= sel.from) {
-    if (P.isNightBooked(state.bookings, iso)) {
-      setHint('An diesem Tag ist die Wohnung belegt. Bitte wählen Sie einen freien Tag als Anreise.', true);
+    if (P.isNightBooked(state.bookings, iso) || P.blockFor(s, iso)) {
+      setHint('An diesem Tag ist die Wohnung nicht frei. Bitte wählen Sie einen grünen Tag als Anreise.', true);
       return;
     }
     state.selection = { from: iso, to: '' };
@@ -429,6 +432,11 @@ function renderPrices() {
   setAll('[data-fee]', P.euro.format(s.fee));
   setAll('[data-price-note]', `für ${s.basePersons} Personen${s.feeEnabled ? ` · zzgl. einmalig ${P.euro.format(s.fee)} Pauschale` : ''}`);
   $$('[data-fee-row]').forEach((el) => { el.hidden = !s.feeEnabled; });
+  $('#extras-rows').innerHTML = s.extras.filter((x) => x.active).map((x) => `
+    <div class="price-row">
+      <div><p class="price-label">${esc(x.name)}</p><p class="price-hint">${P.EXTRA_UNITS[x.unit] || ''}</p></div>
+      <p class="price-value">${P.euro.format(x.price)}</p>
+    </div>`).join('');
   $$('[data-max-persons-input]').forEach((el) => { el.max = s.maxPersons; });
 
   const today = P.todayISO();

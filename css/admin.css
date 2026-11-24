@@ -132,3 +132,22 @@ body.admin { background: var(--sand-50); min-height: 100vh; }
 }
 .toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
 .toast.is-error { background: var(--danger); }
+
+/* Verwaltung: Eintragsart, Punkte, Mini-Schalter */
+.type-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.type-toggle label { cursor: pointer; }
+.type-toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.type-toggle span { display: flex; align-items: center; justify-content: center; gap: 8px; padding: .7em .6em; border: 1.5px solid var(--line); border-radius: 12px; font-weight: 650; font-size: .92rem; text-align: center; transition: border-color .2s, background-color .2s; }
+.type-toggle input:checked + span { border-color: var(--petrol); background: var(--sky-50); color: var(--petrol-900); }
+.type-toggle input:focus-visible + span { outline: 3px solid var(--sky); outline-offset: 2px; }
+.dot { display: inline-block; width: 14px; height: 14px; flex: none; border-radius: 4px; }
+.dot-booked { background: #e5483b; }
+.dot-blocked { background: #d9dee1; border: 1.5px solid #c3cacd; }
+.booking-list li.is-blocked { background: #f2f4f5; border-color: #dfe4e6; }
+.mini-switch { position: relative; display: inline-block; width: 46px; height: 46px; cursor: pointer; }
+.mini-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.mini-switch span { position: absolute; left: 0; top: 11px; width: 46px; height: 26px; border-radius: 999px; background: #c9d6dc; transition: background-color .2s; }
+.mini-switch span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.25); transition: transform .2s; }
+.mini-switch input:checked + span { background: #2e9b6a; }
+.mini-switch input:checked + span::after { transform: translateX(20px); }
+.admin .field select { width: 100%; min-height: 46px; padding: .6em .7em; border: 1.5px solid var(--line); border-radius: 12px; background: var(--white); font: inherit; font-size: 16px; }

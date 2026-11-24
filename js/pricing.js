@@ -20,6 +20,22 @@ export const seasonFor = (s, iso) => s.seasons.find((x) => x.from <= iso && iso 
 export const nightPrice = (s, iso) => { const season = seasonFor(s, iso); return season ? season.price : s.months[parseISO(iso).getMonth()]; };
 export const isNightBooked = (bookings, iso) => bookings.some((b) => b.from <= iso && iso < b.to);
 export const rangeFree = (bookings, from, to, ignoreId = null) => !bookings.some((b) => b.id !== ignoreId && b.from < to && from < b.to);
+// Gesperrte Zeiträume (nicht buchbar): from bis to jeweils einschließlich
+export const blockFor = (s, iso) => (s.blocked || []).find((x) => x.from <= iso && iso <= x.to) || null;
+export const rangeBlocked = (s, from, to) => (s.blocked || []).some((x) => x.from < to && from <= x.to);
+
+export const EXTRA_UNITS = {
+  stay: 'einmalig',
+  night: 'pro Nacht',
+  person: 'pro Person',
+  personNight: 'pro Person und Nacht',
+};
+export const extraAmount = (x, nights, persons) => ({
+  stay: x.price,
+  night: x.price * nights,
+  person: x.price * persons,
+  personNight: x.price * persons * nights,
+}[x.unit] ?? x.price);
 export const lastBookableISO = (s) => addDaysISO(todayISO(), s.maxAdvanceDays);
 
 export function quote(s, from, to, persons) {
@@ -30,7 +46,9 @@ export function quote(s, from, to, persons) {
   const extraPersons = Math.max(0, Math.min(persons, s.maxPersons) - s.basePersons);
   const extra = extraPersons * s.extraPerson * nights;
   const fee = s.feeEnabled ? s.fee : 0;
-  return { nights, lodging, extraPersons, extra, fee, total: lodging + extra + fee };
+  const extras = (s.extras || []).filter((x) => x.active).map((x) => ({ name: x.name, amount: extraAmount(x, nights, persons) }));
+  const extrasTotal = extras.reduce((sum, x) => sum + x.amount, 0);
+  return { nights, lodging, extraPersons, extra, fee, extras, total: lodging + extra + fee + extrasTotal };
 }
 
 export function minNightPrice(s) {
@@ -48,5 +66,6 @@ export function checkRange(s, bookings, from, to) {
   if (n < s.minNights) return `Toms Hütte vermieten wir ab ${s.minNights} Nächten.`;
   if (to > lastBookableISO(s)) return `Anfragen sind bis zum ${formatDate(lastBookableISO(s))} möglich.`;
   if (!rangeFree(bookings, from, to)) return 'In diesem Zeitraum ist die Wohnung leider schon belegt.';
+  if (rangeBlocked(s, from, to)) return 'In diesem Zeitraum ist die Wohnung nicht buchbar.';
   return '';
 }

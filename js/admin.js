@@ -105,6 +105,16 @@ $('.admin-tabs').addEventListener('click', (e) => {
 const bFrom = $('#b-from');
 const bTo = $('#b-to');
 const bInfo = $('#b-info');
+const entryType = () => $('[name="b-type"]:checked').value;
+
+$$('[name="b-type"]').forEach((r) => r.addEventListener('change', () => {
+  const blocked = entryType() === 'blocked';
+  $('#b-from-label').textContent = blocked ? 'Von' : 'Anreise';
+  $('#b-to-label').textContent = blocked ? 'Bis einschließlich' : 'Abreise';
+  $('#b-note-field').hidden = blocked;
+  $('#b-submit').textContent = blocked ? 'Als nicht buchbar eintragen' : 'Als belegt eintragen';
+  updateBookingInfo();
+}));
 
 const calendar = createCalendar($('#admin-calendar'), {
   admin: true,
@@ -126,7 +136,13 @@ function updateBookingInfo() {
   state.selection = { from, to };
   bInfo.classList.remove('is-warning');
   if (!from) { bInfo.textContent = 'Wählen Sie den Zeitraum im Kalender oder über die Datumsfelder.'; return; }
-  if (!to) { bInfo.textContent = 'Jetzt den Abreisetag wählen.'; return; }
+  if (!to) { bInfo.textContent = 'Jetzt den letzten Tag wählen.'; return; }
+  if (entryType() === 'blocked') {
+    const days = P.nightsBetween(from, to) + 1;
+    bInfo.textContent = days >= 1 ? `${days} Tag${days > 1 ? 'e' : ''} werden im Kalender grau und sind nicht buchbar.` : 'Der letzte Tag muss nach dem ersten liegen.';
+    bInfo.classList.toggle('is-warning', days < 1);
+    return;
+  }
   const n = P.nightsBetween(from, to);
   if (n < 1) { bInfo.textContent = 'Die Abreise muss nach der Anreise liegen.'; bInfo.classList.add('is-warning'); return; }
   if (!P.rangeFree(state.bookings, from, to)) {
@@ -144,6 +160,14 @@ $('#booking-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const from = bFrom.value;
   const to = bTo.value;
+  if (entryType() === 'blocked') {
+    if (!from || !to || to < from) { toast('Bitte einen gültigen Zeitraum wählen.', true); return; }
+    await saveBlocked([...state.settings.blocked, { from, to }], 'Zeitraum ist jetzt nicht buchbar und im Kalender grau.');
+    state.selection = { from: '', to: '' };
+    bFrom.value = ''; bTo.value = '';
+    renderBookings();
+    return;
+  }
   if (!from || !to || to <= from) { toast('Bitte einen gültigen Zeitraum wählen.', true); return; }
   if (!P.rangeFree(state.bookings, from, to) && !confirm('Der Zeitraum überschneidet sich mit einer bestehenden Buchung. Trotzdem eintragen?')) return;
   try {
@@ -158,27 +182,51 @@ $('#booking-form').addEventListener('submit', async (e) => {
 
 $('#show-past').addEventListener('change', (e) => { state.showPast = e.target.checked; renderBookings(); });
 
+async function saveBlocked(blocked, message) {
+  try {
+    const next = normalizeSettings({ ...state.settings, blocked });
+    await store.saveSettings(next);
+    state.settings = next;
+    renderBookings();
+    toast(message);
+  } catch (err) { fail(err); }
+}
+
 function renderBookings() {
   const today = P.todayISO();
-  const list = state.bookings.filter((b) => state.showPast || b.to >= today);
-  $('#booking-list').innerHTML = list.length
-    ? list.map((b) => `
-      <li class="${b.to < today ? 'is-past' : ''}">
+  const entries = [
+    ...state.bookings.map((b) => ({ kind: 'booking', id: b.id, from: b.from, to: b.to, end: b.to })),
+    ...state.settings.blocked.map((b, i) => ({ kind: 'blocked', id: String(i), from: b.from, to: b.to, end: b.to })),
+  ].filter((e) => state.showPast || e.end >= today).sort((a, b) => a.from.localeCompare(b.from));
+  $('#booking-list').innerHTML = entries.length
+    ? entries.map((e) => `
+      <li class="${e.end < today ? 'is-past' : ''} ${e.kind === 'blocked' ? 'is-blocked' : ''}">
+        <i class="dot ${e.kind === 'blocked' ? 'dot-blocked' : 'dot-booked'}" aria-hidden="true"></i>
         <div class="b-main">
-          <strong>${P.formatDateLong(b.from)} bis ${P.formatDateLong(b.to)}</strong>
-          <span>${P.nightsLabel(P.nightsBetween(b.from, b.to))}${state.notes[b.id] ? ` · ${esc(state.notes[b.id])}` : ''}</span>
+          <strong>${P.formatDateLong(e.from)} bis ${P.formatDateLong(e.to)}</strong>
+          <span>${e.kind === 'blocked'
+            ? `Nicht buchbar · ${P.nightsBetween(e.from, e.to) + 1} Tage`
+            : `Belegt · ${P.nightsLabel(P.nightsBetween(e.from, e.to))}${state.notes[e.id] ? ` · ${esc(state.notes[e.id])}` : ''}`}</span>
         </div>
-        <button class="icon-btn" type="button" data-show="${b.id}" title="Im Kalender zeigen" aria-label="Im Kalender zeigen">◎</button>
-        <button class="icon-btn danger" type="button" data-delete-booking="${b.id}" title="Buchung löschen" aria-label="Buchung löschen">✕</button>
+        <button class="icon-btn" type="button" data-show-date="${e.from}" title="Im Kalender zeigen" aria-label="Im Kalender zeigen">◎</button>
+        <button class="icon-btn danger" type="button" ${e.kind === 'blocked' ? `data-delete-blocked="${e.id}"` : `data-delete-booking="${e.id}"`} title="Eintrag löschen" aria-label="Eintrag löschen">✕</button>
       </li>`).join('')
-    : '<li class="empty">Keine anstehenden Buchungen eingetragen.</li>';
+    : '<li class="empty">Keine anstehenden Einträge.</li>';
   updateBookingInfo();
   calendar.render();
 }
 
 $('#booking-list').addEventListener('click', async (e) => {
-  const show = e.target.closest('[data-show]');
-  if (show) { calendar.showMonthOf(state.bookings.find((b) => b.id === show.dataset.show).from); return; }
+  const show = e.target.closest('[data-show-date]');
+  if (show) { calendar.showMonthOf(show.dataset.showDate); return; }
+  const delBlocked = e.target.closest('[data-delete-blocked]');
+  if (delBlocked) {
+    const idx = Number(delBlocked.dataset.deleteBlocked);
+    const b = state.settings.blocked[idx];
+    if (!confirm(`Sperre ${P.formatDate(b.from)} bis ${P.formatDate(b.to)} aufheben? Die Tage werden wieder buchbar.`)) return;
+    await saveBlocked(state.settings.blocked.filter((_, i) => i !== idx), 'Sperre aufgehoben.');
+    return;
+  }
   const del = e.target.closest('[data-delete-booking]');
   if (!del) return;
   const b = state.bookings.find((x) => x.id === del.dataset.deleteBooking);
@@ -209,6 +257,22 @@ const updateFeeState = () => {
   $('.fee-amount').classList.toggle('is-off', !on);
 };
 
+function extraRow(x = {}) {
+  const units = Object.entries(P.EXTRA_UNITS).map(([k, v]) => `<option value="${k}" ${x.unit === k ? 'selected' : ''}>${v}</option>`).join('');
+  return `<div class="season-row extra-row">
+    <div class="field"><label>Aktiv</label><label class="mini-switch"><input type="checkbox" class="x-active" ${x.active !== false ? 'checked' : ''}><span></span></label></div>
+    <div class="field"><label>Bezeichnung</label><input type="text" class="x-name" value="${esc(x.name || '')}" placeholder="z. B. Endreinigung"></div>
+    <div class="field s-from"><label>Preis (€)</label><input type="number" class="x-price" min="0" step="0.5" value="${esc(x.price ?? '')}"></div>
+    <div class="field s-to"><label>Abrechnung</label><select class="x-unit">${units}</select></div>
+    <div class="field s-price"></div>
+    <button class="icon-btn danger" type="button" data-remove-extra title="Posten entfernen" aria-label="Posten entfernen">✕</button>
+  </div>`;
+}
+const renderExtraEmpty = () => {
+  const rows = $('#extra-rows');
+  if (!$('.extra-row', rows)) rows.innerHTML = '<p class="season-empty">Keine Zusatzkosten eingetragen.</p>';
+};
+
 function seasonRow(s = {}) {
   return `<div class="season-row">
     <div class="field"><label>Farbe</label><input type="color" class="s-color" value="${esc(s.color || SEASON_COLORS[0])}"></div>
@@ -233,6 +297,8 @@ function renderPriceForm() {
     <div class="field"><label for="m-${i}">${P.MONTHS[i]}</label><input type="number" id="m-${i}" class="m-in" min="0" value="${p}"></div>`).join('');
   $('#season-rows').innerHTML = s.seasons.map(seasonRow).join('');
   renderSeasonEmpty();
+  $('#extra-rows').innerHTML = s.extras.map(extraRow).join('');
+  renderExtraEmpty();
   setDirty(false);
 }
 
@@ -259,6 +325,20 @@ $('#add-season').addEventListener('click', () => {
     color: SEASON_COLORS[n % SEASON_COLORS.length],
   }));
   $$('.season-row .s-name', rows).at(-1).focus();
+  setDirty(true);
+});
+$('#add-extra').addEventListener('click', () => {
+  const rows = $('#extra-rows');
+  $('.season-empty', rows)?.remove();
+  rows.insertAdjacentHTML('beforeend', extraRow({ name: '', price: '', unit: 'stay', active: true }));
+  $$('.x-name', rows).at(-1).focus();
+  setDirty(true);
+});
+$('#extra-rows').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-remove-extra]');
+  if (!btn) return;
+  btn.closest('.extra-row').remove();
+  renderExtraEmpty();
   setDirty(true);
 });
 $('#season-rows').addEventListener('click', (e) => {
@@ -289,7 +369,20 @@ priceForm.addEventListener('submit', async (e) => {
     row.classList.toggle('is-invalid', bad);
     if (bad) invalid = true; else next.seasons.push(season);
   });
-  if (invalid) { toast('Bitte prüfen Sie die rot markierten Saisons (Von, Bis und Preis).', true); return; }
+  next.extras = [];
+  $$('.extra-row').forEach((row) => {
+    const extra = {
+      name: $('.x-name', row).value.trim(),
+      price: Number($('.x-price', row).value) || 0,
+      unit: $('.x-unit', row).value,
+      active: $('.x-active', row).checked,
+    };
+    const bad = !extra.name;
+    row.classList.toggle('is-invalid', bad);
+    if (bad) invalid = true; else next.extras.push(extra);
+  });
+  next.blocked = state.settings.blocked;
+  if (invalid) { toast('Bitte prüfen Sie die rot markierten Zeilen (Name, Datum und Preis).', true); return; }
   if (next.months.some((p) => p <= 0)) { toast('Bitte für jeden Monat einen Preis eintragen.', true); return; }
   if (next.basePersons > next.maxPersons) { toast('Die Personen im Grundpreis dürfen nicht über der Höchstzahl liegen.', true); return; }
 

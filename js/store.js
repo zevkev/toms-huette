@@ -24,6 +24,13 @@ export function normalizeSettings(raw = {}) {
     .filter((x) => x && x.from && x.to)
     .map((x) => ({ name: String(x.name || 'Saison'), from: x.from, to: x.to, price: Number(x.price) || 0, color: x.color || '#f2b544' }))
     .sort((a, b) => a.from.localeCompare(b.from));
+  s.blocked = (raw.blocked ?? DEFAULT_SETTINGS.blocked ?? [])
+    .filter((x) => x && x.from && x.to)
+    .map((x) => ({ from: x.from, to: x.to }))
+    .sort((a, b) => a.from.localeCompare(b.from));
+  s.extras = (raw.extras ?? DEFAULT_SETTINGS.extras ?? [])
+    .filter((x) => x && x.name)
+    .map((x) => ({ name: String(x.name), price: Number(x.price) || 0, unit: x.unit || 'stay', active: x.active !== false }));
   return s;
 }
 
