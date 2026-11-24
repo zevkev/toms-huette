@@ -196,3 +196,14 @@ body.admin { background: var(--sand-50); min-height: 100vh; }
   .season-row.extra-row { grid-template-areas: "name name del" "from from from" "to to to" "price price price"; }
   .season-row .f-to { grid-column: auto; }
 }
+
+/* Admin: Ferien- und Feiertagshinweis je Saison */
+.season-row { grid-template-areas: "name from to price del" "color color color color color" "hint hint hint hint hint"; }
+.season-row.extra-row { grid-template-areas: "name from to price del"; }
+.season-row .f-hint { grid-area: hint; }
+.s-hint { margin: 0; padding: 8px 12px; border-radius: 10px; background: #fff8e6; color: #6b4a00; font-size: .86rem; line-height: 1.45; }
+.s-hint:empty { display: none; }
+@media (max-width: 760px) {
+  .season-row { grid-template-areas: "name name del" "from from from" "to to to" "price price price" "color color color" "hint hint hint"; }
+  .season-row.extra-row { grid-template-areas: "name name del" "from from from" "to to to" "price price price"; }
+}

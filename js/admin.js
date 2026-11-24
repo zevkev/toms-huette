@@ -1,7 +1,8 @@
 import { createStore, normalizeSettings } from './store.js';
 import { SECTIONS, DEFAULT_IMAGES, SEASON_COLORS, SEASON_PALETTE } from './config-defaults.js';
 import * as P from './pricing.js';
-import { createCalendar } from './calendar.js';
+import { createCalendar, ICON_FERIEN, ICON_HOLIDAY } from './calendar.js';
+import { FERIEN, holidayFor } from './holidays.js';
 
 // Pfade zu Website-Dateien (die Verwaltung liegt im Unterordner /admin/)
 const asset = (path) => new URL(`../${path}`, import.meta.url).href;
@@ -272,6 +273,23 @@ const renderExtraEmpty = () => {
   if (!$('.extra-row', rows)) rows.innerHTML = '<p class="season-empty">Keine Zusatzkosten eingetragen.</p>';
 };
 
+// Nur für den Admin: welche NRW-Ferien und Feiertage fallen in einen Zeitraum?
+const shortDate = (iso) => P.formatDate(iso, { day: '2-digit', month: '2-digit' });
+function seasonHint(from, to) {
+  if (!from || !to || to < from) return '';
+  const parts = FERIEN.filter((f) => f.from <= to && from <= f.to)
+    .map((f) => `${ICON_FERIEN} ${f.name} (${shortDate(f.from)}${f.to !== f.from ? `–${shortDate(f.to)}` : ''})`);
+  for (let d = from, n = 0; d <= to && n < 400; d = P.addDaysISO(d, 1), n++) {
+    const h = holidayFor(d);
+    if (h) parts.push(`${ICON_HOLIDAY} ${h} (${shortDate(d)})`);
+  }
+  return parts.length ? parts.join(' · ') : 'Keine NRW-Ferien und keine Feiertage in diesem Zeitraum.';
+}
+const updateHint = (row) => {
+  const hint = $('.s-hint', row);
+  if (hint) hint.textContent = seasonHint($('.s-from-in', row).value, $('.s-to-in', row).value);
+};
+
 let rowCounter = 0;
 function seasonRow(s = {}) {
   const id = `c${rowCounter++}`;
@@ -286,6 +304,7 @@ function seasonRow(s = {}) {
     <div class="field f-to"><label>Bis einschließlich</label><input type="date" class="s-to-in" value="${esc(s.to || '')}"></div>
     <div class="field f-price"><label>Preis / Nacht (€)</label><input type="number" class="s-price-in" min="0" inputmode="decimal" value="${esc(s.price ?? '')}"></div>
     <div class="field f-color"><label>Farbe im Kalender</label><div class="swatches">${swatches}</div></div>
+    <p class="s-hint f-hint">${esc(seasonHint(s.from, s.to))}</p>
     <button class="icon-btn danger f-del" type="button" data-remove-season title="Saison entfernen" aria-label="Saison entfernen">✕</button>
   </div>`;
 }
@@ -308,6 +327,9 @@ function renderPriceForm() {
   setDirty(false);
 }
 
+priceForm.addEventListener('change', (e) => {
+  if (e.target.matches('.s-from-in, .s-to-in')) updateHint(e.target.closest('.season-row'));
+});
 priceForm.addEventListener('input', (e) => {
   if (e.target.id === 'all-months') return;
   if (e.target.id === 'p-feeEnabled') updateFeeState();
