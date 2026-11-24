@@ -526,7 +526,13 @@ $('#image-sections').addEventListener('change', async (e) => {
   }
   const caption = e.target.closest('[data-caption]');
   if (caption) {
-    try { await store.updateImage(caption.dataset.caption, { caption: caption.value.trim() }); toast('Bildunterschrift gespeichert.'); } catch (err) { fail(err); }
+    const value = caption.value.trim();
+    try {
+      await store.updateImage(caption.dataset.caption, { caption: value });
+      const img = state.images.find((i) => i.id === caption.dataset.caption);
+      if (img) img.caption = value; // auch in der Ansicht merken, sonst geht sie beim Neuzeichnen verloren
+      toast('Bildunterschrift gespeichert.');
+    } catch (err) { fail(err); }
   }
 });
 
