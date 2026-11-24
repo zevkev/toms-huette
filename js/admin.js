@@ -357,7 +357,7 @@ priceForm.addEventListener('submit', async (e) => {
   next.months = $$('.m-in').map((el) => Number(el.value) || 0);
   next.seasons = [];
   let invalid = false;
-  $$('.season-row').forEach((row) => {
+  $$('#season-rows .season-row').forEach((row) => {
     const season = {
       name: $('.s-name', row).value.trim() || 'Saison',
       from: $('.s-from-in', row).value,
